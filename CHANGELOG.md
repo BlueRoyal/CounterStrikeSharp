@@ -1,4 +1,4 @@
-## What's Changed in v1.0.335
+## What's Changed in v1.0.335 
 * fix: obsolete `GetHitGroup()` and point to `HitGroupId` schema property ([51b6b45](https://github.com/roflmuffin/CounterStrikeSharp/commit/51b6b45390f9562a3f0d8bdc34af474b28a0e8b1))
 * chore(deps): update hl2sdk ([d5fad8d](https://github.com/roflmuffin/CounterStrikeSharp/commit/d5fad8d80105f8f521a24d63d1ed1d16cbb4dd7e))
 * chore(gamedata): update offsets & signatures ([bf1ce2e](https://github.com/roflmuffin/CounterStrikeSharp/commit/bf1ce2e8a34b0d89b21cfc5180ca9feec6fd64c2))
