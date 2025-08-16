@@ -26,20 +26,20 @@ jobs:
       gitversion_assemblysemver: ${{ steps.gitversion.outputs.assemblySemVer }}
       gitversion_informationalversion: ${{ steps.gitversion.outputs.informationalVersion }}
     steps:
-    - name: Install GitVersion
-      uses: gittools/actions/gitversion/setup@v1
-      with:
-        versionSpec: 6.0.x
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v1
+        with:
+          versionSpec: 6.0.x
 
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Execute GitVersion
-      id: gitversion
-      uses: gittools/actions/gitversion/execute@v1
-      with:
-        useConfigFile: true
+      - name: Execute GitVersion
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v1
+        with:
+          useConfigFile: true
 
   build_windows:
     needs: setup
@@ -47,7 +47,7 @@ jobs:
     steps:
       - name: Prepare env
         shell: bash
-        run: | 
+        run: |
           echo "GITHUB_SHA_SHORT=${GITHUB_SHA::7}" >> $GITHUB_ENV
           echo "SEMVER=${{ needs.setup.outputs.gitversion_semver }}" >> $GITHUB_ENV
 
@@ -58,11 +58,7 @@ jobs:
           for /f "usebackq delims=*" %%i in (`vswhere -latest -property installationPath`) do (
             call "%%i"\Common7\Tools\vsdevcmd.bat -arch=x64 -host_arch=x64
           )
-
-          :: Loop over all environment variables and make them global.
-          for /f "delims== tokens=1,2" %%a in ('set') do (
-            echo>>"%GITHUB_ENV%" %%a=%%b
-          )
+          :: Hinweis: KEIN globales Dumpen aller Umgebungsvariablen in %GITHUB_ENV% mehr!
 
       - uses: actions/checkout@v4
         with:
@@ -72,13 +68,13 @@ jobs:
         run: |
           mkdir -p build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ..
-          cmake --build . --config ${{env.BUILD_TYPE}} -- /m:16
+          cmake -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} ..
+          cmake --build . --config ${{ env.BUILD_TYPE }} -- /m:16
 
       - name: Clean build directory
         run: |
           mkdir -p build/addons/counterstrikesharp/bin/win64
-          mv build/${{env.BUILD_TYPE}}/*.dll build/addons/counterstrikesharp/bin/win64
+          mv build/${{ env.BUILD_TYPE }}/*.dll build/addons/counterstrikesharp/bin/win64
           mkdir build/output/
           mv build/addons build/output
 
@@ -90,7 +86,6 @@ jobs:
   build_linux:
     needs: setup
     runs-on: ubuntu-latest
-    # Could not figure out how to run in a container only on some matrix paths, so I've split it out into its own build.
     container:
       image: registry.gitlab.steamos.cloud/steamrt/sniper/sdk:latest
     steps:
@@ -108,8 +103,8 @@ jobs:
         run: |
           mkdir -p build
           cd build
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ..
-          cmake --build . --config ${{env.BUILD_TYPE}} -- -j16
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} ..
+          cmake --build . --config ${{ env.BUILD_TYPE }} -- -j16
 
       - name: Clean build directory
         run: |
@@ -131,7 +126,6 @@ jobs:
         shell: bash
         run: echo "GITHUB_SHA_SHORT=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-      # We don't need expensive submodules for the managed side.
       - uses: actions/checkout@v4
 
       - name: Build runtime v${{ needs.setup.outputs.gitversion_semver }}
@@ -225,27 +219,29 @@ jobs:
           curl -s -L https://download.visualstudio.microsoft.com/download/pr/086d1dd6-57a5-437a-a1ef-549cf702fb48/dd4a8fe6c53a1016a414d6f2925c1323/aspnetcore-runtime-8.0.3-win-x64.zip -o dotnet.zip
           unzip -qq dotnet.zip -d build/windows/addons/counterstrikesharp/dotnet
 
-      - name: Zip Builds
+      - name: Zip Builds (with runtime)
         run: |
           (cd build/linux && zip -qq -r ../../counterstrikesharp-with-runtime-linux-${{ needs.setup.outputs.gitversion_semver }}.zip *)
           (cd build/windows && zip -qq -r ../../counterstrikesharp-with-runtime-windows-${{ needs.setup.outputs.gitversion_semver }}.zip *)
       
+      # Changelog als Datei erzeugen und NICHT als großer Input-String übergeben
       - name: Generate a changelog
         uses: orhun/git-cliff-action@v4
         id: git-cliff
         with:
-            config: cliff.toml
-            args: --current -s footer
+          config: cliff.toml
+          args: --current -s footer
+
+      - name: Write changelog to file
+        run: |
+          printf "%s" "${{ steps.git-cliff.outputs.content }}" > CHANGELOG.md
 
       - name: Release
         id: release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           append_body: true
-          body: |
-            ${{ steps.git-cliff.outputs.content }}
-
-            Please refer to [CHANGELOG.md](https://github.com/roflmuffin/CounterStrikeSharp/blob/${{ github.ref_name }}/CHANGELOG.md) for details.
+          body_path: CHANGELOG.md
           files: |
             counterstrikesharp-windows-${{ needs.setup.outputs.gitversion_semver }}.zip
             counterstrikesharp-with-runtime-windows-${{ needs.setup.outputs.gitversion_semver }}.zip
