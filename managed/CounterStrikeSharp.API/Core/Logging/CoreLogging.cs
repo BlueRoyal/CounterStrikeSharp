@@ -16,7 +16,14 @@ public static class CoreLogging
     {
         if (SerilogLogger == null)
         {
+            var levelStr = Environment.GetEnvironmentVariable("CSSHARP_LOGLEVEL");
+            if (!Enum.TryParse<Serilog.Events.LogEventLevel>(levelStr, true, out var logLevel))
+            {
+                logLevel = Serilog.Events.LogEventLevel.Information; // Default
+            }
+
             SerilogLogger = new LoggerConfiguration()
+                .MinimumLevel.Is(logLevel)
                 .Enrich.FromLogContext()
                 .Enrich.With<SourceContextEnricher>()
                 .WriteTo.Console(
@@ -32,8 +39,10 @@ public static class CoreLogging
                     "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u4}] (cssharp:{SourceContext}) {Message:lj}{NewLine}{Exception}")
                 .CreateLogger();
 
-            Factory =
-                LoggerFactory.Create(builder => { builder.AddSerilog(SerilogLogger); });
+            Factory = LoggerFactory.Create(builder =>
+            {
+                builder.AddSerilog(SerilogLogger);
+            });
         }
 
         builder.AddSerilog(SerilogLogger);
