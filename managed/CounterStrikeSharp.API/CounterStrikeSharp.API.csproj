@@ -7,10 +7,13 @@
         <EnablePackageValidation>true</EnablePackageValidation>
         <NoWarn>$(NoWarn);CS1591;CP0003</NoWarn>
         <Nullable>enable</Nullable>
+          <!-- Eindeutige ID für deinen Fork -->
+        <PackageId>BlueRoyal.CounterStrikeSharp.API</PackageId>
+        <AssemblyName>BlueRoyal.CounterStrikeSharp.API</AssemblyName>
         <Authors>Roflmuffin</Authors>
         <Description>Official server side runtime assembly for CounterStrikeSharp</Description>
         <PackageProjectUrl>http://docs.cssharp.dev/</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/roflmuffin/CounterStrikeSharp</RepositoryUrl>
+        <RepositoryUrl>https://github.com/BlueRoyal/CounterStrikeSharp</RepositoryUrl>
         <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <IncludeSymbols>true</IncludeSymbols>
